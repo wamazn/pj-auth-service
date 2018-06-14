@@ -11,7 +11,7 @@ export const index = ({ querymen: { query, select, cursor } }, res, next) =>
       }))
     )
     .then(success(res))
-    .catch(next)
+    .catch(error(res))
 
 export const show = ({ params }, res, next) =>
   Member.findById(params.id)
@@ -20,7 +20,7 @@ export const show = ({ params }, res, next) =>
     .then(success(res))
     .catch(next)
 
-export const exist = ({ querymen: { query } }, res, next) => 
+export const exist = ({ querymen: { query } }, res, next) =>
   {
     if(query['$or'][0].email || query['$or'][0].membername)
         Member.count(query)
@@ -35,7 +35,7 @@ export const exist = ({ querymen: { query } }, res, next) =>
         })
   }
 
-export const showMe = ({ member }, res) => 
+export const showMe = ({ member }, res) =>
   res.json(member.view(true))
 
 export const create = ({ bodymen: { body } }, res, next) =>
@@ -55,7 +55,7 @@ export const create = ({ bodymen: { body } }, res, next) =>
           message: 'email already registered'
         })
       } else {
-        next(err)
+        error(res)(err)
       }
     })
   }
@@ -105,6 +105,6 @@ export const updatePassword = ({ bodymen: { body }, params, member }, res, next)
 export const destroy = ({ params }, res, next) =>
   Member.findById(params.id)
     .then(notFound(res))
-    .then((member) => member ? member.remove() : null)
+    .then((member) => member ? member.delete() : null)
     .then(success(res, 204))
     .catch(error(res))

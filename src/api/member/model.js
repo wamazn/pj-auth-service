@@ -110,6 +110,11 @@ memberSchema.methods = {
 
   authenticate (password) {
     return bcrypt.compare(password, this.password).then((valid) => valid ? this : false)
+  },
+
+  delete() {
+    this.enabled = false
+    return this.save()
   }
 }
 

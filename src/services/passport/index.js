@@ -45,14 +45,14 @@ export const token = ({ required, roles = Member.roles } = {}) => (req, res, nex
     })
   })(req, res, next)
 
-passport.use('password', new BasicStrategy((email, password, done) => {
-  const userSchema = new Schema({ email: schema.tree.email, password: schema.tree.password })
+passport.use('password', new BasicStrategy((membername, password, done) => {
+  const userSchema = new Schema({ membername: schema.tree.membername, password: schema.tree.password })
 
-  userSchema.validate({ email, password }, (err) => {
+  userSchema.validate({ membername, password }, (err) => {
     if (err) done(err)
   })
 
-  Member.findOne({ email }).then((member) => {
+  Member.findOne({ membername }).then((member) => {
     if (!member) {
       done(true)
       return null

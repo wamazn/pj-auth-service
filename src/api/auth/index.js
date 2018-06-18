@@ -57,7 +57,7 @@ router.post('/google',
  * @apiError 401 authenticated access only or invalid credentials.
  */
 router.delete('/',
-token({ required: true }),
+//token({ required: true }),
 logout)
 
 export default router

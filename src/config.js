@@ -1,6 +1,8 @@
 /* eslint-disable no-unused-vars */
 import path from 'path'
 
+
+const keyData = fs.readFileSync(path.join(path.normalize(`${__dirname} + '/../../..`), 'private.pem'));
 /* istanbul ignore next */
 const requireProcessEnv = (name) => {
   if (!process.env[name]) {
@@ -35,6 +37,17 @@ const config = {
           safe: true
         }
       }
+    },
+      // Secret for session, you will want to change this and make it an environment variable
+    secrets: {
+      session: 'server-secret',
+      rsaPvK: keyData.toString()
+    },
+    headers: {
+      tag: 'x-pajuani-tg',
+      seedData: 'x-pajuani-sd',
+      token: 'x-pajuani-tk',
+      next: 'x-pajuani-nx'
     }
   },
   test: {

@@ -4,6 +4,11 @@ import { secret as configSecret } from '../../config'
 
 const RSAKey = new NodeRSA(configSecret.rsaPvK)
 
+export const getRandomInRange = (max, min) => {
+    min = min ? min : 0;
+    return min +  Math.floor(Math.random() * Math.floor(max));
+}
+
 export const getRandom = (format, keylen) => {
   let random = crypto.randomBytes(keylen? keylen : 16)
         return random.toString(format)
@@ -24,6 +29,15 @@ export const aesEncrypt = (data, secret, iv) => {
         encrypted = cipher.update(data, 'utf8', 'hex')
   }
   return encrypted += cipher.final('hex')
+}
+
+export const aesDecryptAndRSAVerify = (load, session, iv) => {
+    const decryptedData = aesDecrecrypt(load.data, session.key, iv)
+    const isVerified =  rsaVerify(load.data, load.sig, session.clientRsaPublicKey)
+    if(isVerified)
+        return decryptedData;
+    else
+        throw new Error('CLIENT_AUTHENTICATION_FAILED')
 }
 
 export const aesDecrecrypt = (data, secret, iv) => {
@@ -50,7 +64,7 @@ export const rsaVerify = (data, signature, pubKey) => {
             rsa = new NodeRSA()
             rsa.importKey(pubKey, 'public')
         }
-        return rsa.verify(data, signature, null, 'base64')
+        return rsa.verify(data, signature, 'base64', 'base64')
 }
 
 export const rsaSign = (data) => RSAKey.sign(data,'base64')

@@ -43,21 +43,6 @@ router.all('/',
   index)
 
 /**
- * @api {get} /session/:id Retrieve session
- * @apiName RetrieveSession
- * @apiGroup Session
- * @apiPermission user
- * @apiParam {String} access_token user access token.
- * @apiSuccess {Object} session Session's data.
- * @apiError {Object} 400 Some parameters may contain invalid values.
- * @apiError 404 Session not found.
- * @apiError 401 user access only.
- */
-router.get('/:id',
-  token({ required: true }),
-  show)
-
-/**
  * @api {put} /session/:id Update session
  * @apiName UpdateSession
  * @apiGroup Session
@@ -89,11 +74,14 @@ router.put('/session/:id',
  * @apiError 404 Session not found.
  * @apiError 401 user access only.
  */
-router.delete('/:id',
+router.delete('/session/:id',
   token({ required: true }),
   destroy)
 
 router.post('/session/keys',
-  extendKeys)
+extendKeys)
+
+router.put('/session/keys',
+extendKeys)
 
 export default router

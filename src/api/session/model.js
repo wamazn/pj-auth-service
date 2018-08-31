@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose'
-import { getRandom, nextSecret} from '../../services/encryption'
+import { getRandom, getRandomInRange, nextSecret} from '../../services/encryption'
+import { headers as SessionHeader } from '../../config'
 
 const sessionSchema = new Schema({
   key: {
@@ -20,6 +21,10 @@ const sessionSchema = new Schema({
   ivClient: {
     type: [String]
   },
+  clientRsaPublicKey: {
+    type: String,
+    required: true
+  },
   active: {
     type: String
   },
@@ -38,7 +43,7 @@ const sessionSchema = new Schema({
 
 
 sessionSchema.statics = {
-  initRatchet(shared, clientPubKey) {
+  initRatchet(shared, clientNextIv, clientRSAPublicKey) {
     if(!shared || !clientPubKey)
         return Promise.reject(new Error("DATA_MISSING"))
         let hss = new this()
@@ -46,8 +51,9 @@ sessionSchema.statics = {
         hss.expire = Date.now() + 5*60*1000 // 5mn valid time
         hss.version = 1
         hss.ivClient.push(clientPubKey)
-        hss.ivServerpush(getRandom('hex'))
+        hss.ivServer.push(getRandom('hex'))
         hss.active = true
+        hss.clientRsaPublicKey = clientRSAPublicKey
       return hss.save()
   }
 }
@@ -62,6 +68,7 @@ sessionSchema.methods = {
       version: this.version,
       ivServer: this.ivServer,
       ivClient: this.ivClient,
+      clientRsaPublicKey: this.clientRsaPublicKey,
       active: this.active,
       createdAt: this.createdAt,
       updatedAt: this.updatedAt
@@ -82,25 +89,24 @@ sessionSchema.methods = {
         this.ivClient.push(clientPubKey)
         this.ivServer.push(getRandom('hex'))
         this.active = true
-        this.updatedAt = Date.now() + 5*60*1000
+        this.updatedAt = Date.now()
       return this.save()
   },
-  // TODO create encrypt key separated from decrypt key
-  ratchetFoward(req) {
-      if(!req || !req.query || !req.query.n || !req.query.d)
-        return Promise.reject( new Error("DATA_MISSING"))
+
+  ratchetFoward(req, res) {
       if(!this.active || this.expire <= Date.now()) {
         this.remove().exec()
         return Promise.reject(new Error("SESSION_INVALID"))
       }
 
-      req.sessionKey.encryptKey = nextSecret(this.key, this.ivClient)
-      this.key = nextSecret(req.sessionKey.encryptKey, this.ivServer)
-      this.ivClient = req.query.n
-      this.ivServer = getRandom('hex')
+      const nextIVIdx = getRandomInRange(this.ivServer.length);
+      // USE this with the key to encrypt
+      res.setHeader(SessionHeader.next, nextIVIdx)
+      req.sessionKey.currentIv = nextSecret(this.key, this.ivClient.splice(nextIVIdx, 1))
+      // expira en 5 mn
       this.expire = Date.now() + 5*60*1000
       this.version++
-      this.updatedAt = Date.now() + 5*60*1000
+      this.updatedAt = Date.now()
       return this.save()
   }
 }

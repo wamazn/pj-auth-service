@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import path from 'path'
-
+import fs from 'fs'
 
 const keyData = fs.readFileSync(path.join(path.normalize(`${__dirname} + '/../../..`), 'private.pem'));
 /* istanbul ignore next */

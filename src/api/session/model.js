@@ -100,8 +100,8 @@ sessionSchema.methods = {
       }
 
       const nextIVIdx = getRandomInRange(this.ivServer.length);
-      // USE this with the key to encrypt
       res.setHeader(SessionHeader.next, nextIVIdx)
+      // USE this with the key to encrypt
       req.sessionKey.currentIv = nextSecret(this.key, this.ivClient.splice(nextIVIdx, 1))
       // expira en 5 mn
       this.expire = Date.now() + 5*60*1000

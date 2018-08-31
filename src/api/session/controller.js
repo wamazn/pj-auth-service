@@ -4,7 +4,7 @@ import { headers as SessionHeader } from '../../config'
 import * as elliptic from 'elliptic'
 
 import {
-    rsaDecrypt, aesDecrecrypt,
+    rsaDecrypt, aesDecrypt,
     rsaVerify, hmacify, rsaEncrypt,
     rsaSign, aesEncrypt, aesDecryptAndRSAVerify, nextSecret
 } from '../../services/encryption'
@@ -25,6 +25,9 @@ export const index = (req, res, next) => {
     var clientToken = headers[SessionHeader.token]
     var data = headers[SessionHeader.seedData]
     var ivIdx = headers[SessionHeader.next]
+    var authHeader = headers[SessionHeader.authorization]
+
+    var basicAuth = authHeader.indexOf('Basic ') === 0 ? authHeader.split('Basic ')[1] : null
 
     if ((!clientToken && !data) || (clientToken && !tag) || !ivIdx)
         return res.status(401).send("NOT_AUTHORIZED")
@@ -49,27 +52,32 @@ export const index = (req, res, next) => {
                         console.log(session)
                         console.log(req.query)
                         console.log(req.body)
-                        const clientIv = nextSecret(session.key ,session.ivClient.splice(ivIdx, 1));
+                        const clientIv = nextSecret(session.key, session.ivClient.splice(ivIdx, 1))
                         if (req.query) {
                             try {
-                                aesDecryptAndRSAVerify(req.query, session, clientIv)
+                                req.query = aesDecryptAndRSAVerify(req.query, session, clientIv)
                             } catch (err) {
                                 return res.status(401).send('NOT_AUTHORIZED')
                             }
                         }
                         if (req.body) {
                             try {
-                                aesDecryptAndRSAVerify(req.body, session, clientIv)
+                                req.body = aesDecryptAndRSAVerify(req.body, session, clientIv)
+                            } catch (err) {
+                                return res.status(401).send('NOT_AUTHORIZED')
+                            }
+                        }
+                        if (basicAuth) {
+                            try {
+                                basicAuth = aesDecrypt(basicAuth, session, clientIv)
+                                res.setHeader(SessionHeader.authorization, 'Basic ' + basicAuth)
                             } catch (err) {
                                 return res.status(401).send('NOT_AUTHORIZED')
                             }
                         }
 
-                        // TODO a cambiar (IVs)
                         return session.ratchetFoward(req).then((savedSession) => {
-                            let qr = { n: savedSession.ivs, d: savedSession.updatedAt }
-                            let qrHdr = aesEncrypt(qr, req.sessionKey.encryptKey, req.sessionKey.ivs)
-                            res.setHeader(SessionHeader.next, qrHdr)
+
                             res.setHeader(SessionHeader.token, clientToken)
                             res.setHeader(SessionHeader.tag, savedSession._id)
                             next()
@@ -88,7 +96,7 @@ export const index = (req, res, next) => {
 }
 
 export const seeding = ({ seedData, sessionKey, method }, res) => {
-    const data = parseSeedingData(seedData);
+    const data = parseSeedingData(seedData)
     if (seedData) {
         try {
             let clientRSAPublicKey = data.load.rsa
@@ -102,11 +110,10 @@ export const seeding = ({ seedData, sessionKey, method }, res) => {
             remoteK = null
             console.log('shared calculated: ', shared)
             // save secreet
-            let promise;
             if (sessionKey) {
-                promise = sessionKey.resetRatchet(shared, data.load.niv);
+                let promise = sessionKey.resetRatchet(shared, data.load.niv)
             } else {
-                promise = Session.initRatchet(shared, data.load.niv, clientRSAPublicKey);
+                let promise = Session.initRatchet(shared, data.load.niv, clientRSAPublicKey)
             }
             data = null
             shared = null
@@ -133,7 +140,7 @@ export const seeding = ({ seedData, sessionKey, method }, res) => {
                 .catch(function (err) {
                     console.log(err)
                     return res.status(500).end("HANDSHAKE_ERROR")
-                });
+                })
         }
         catch (err) {
             console.log(err)
@@ -156,9 +163,9 @@ export const destroy = ({ sessionKey }, res) => {
 }
 
 const parseSeedingData = (seedData) => {
-    let partArr = seedData.split('@');
+    let partArr = seedData.split('@')
     if (partArr.length !== 6)
-        return null;
+        return null
     return {
         load: {
             rsa: partArr[0],
@@ -168,7 +175,7 @@ const parseSeedingData = (seedData) => {
             time: partArr[4]
         },
         signature: partArr[5]
-    };
+    }
 }
 
 const singAndSet = (id, iss, res) => {

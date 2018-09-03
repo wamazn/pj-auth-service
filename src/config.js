@@ -2,7 +2,7 @@
 import path from 'path'
 import fs from 'fs'
 
-const keyData = fs.readFileSync(path.join(path.normalize(`${__dirname} + '/../../..`), 'private.pem'));
+const keyData = fs.readFileSync(path.join(path.normalize(`${__dirname} + '/..`), 'pajuani.auth.key'));
 /* istanbul ignore next */
 const requireProcessEnv = (name) => {
   if (!process.env[name]) {
@@ -26,11 +26,12 @@ const config = {
     root: path.join(__dirname, '..'),
     port: process.env.PORT || 9000,
     ip: process.env.IP || '0.0.0.0',
-    apiRoot: process.env.API_ROOT || '',
+    apiRoot: process.env.API_ROOT || '/auth/api',
     defaultEmail: 'no-reply@pajuani-oauth.com',
     sendgridKey: requireProcessEnv('SENDGRID_KEY'),
     masterKey: requireProcessEnv('MASTER_KEY'),
     jwtSecret: requireProcessEnv('JWT_SECRET'),
+    jwtIss: 'pajuani.auth',
     mongo: {
       options: {
         db: {

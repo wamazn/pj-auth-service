@@ -2,12 +2,26 @@ import { Router } from 'express'
 import { middleware as query } from 'querymen'
 import { middleware as body } from 'bodymen'
 import { token } from '../../services/passport'
-import { create, seeding, extendKeys, show, update, destroy } from './controller'
+import { create, index, seeding, extendKeys, show, update, destroy } from './controller'
 import { schema } from './model'
 export Session, { schema } from './model'
 
 const router = new Router()
 const { key, expire, version, ivServer, ivClient, active, createdAt, updatedAt } = schema.tree
+
+/**
+ * @api {get} /session Retrieve sessions
+ * @apiName RetrieveSessions
+ * @apiGroup Session
+ * @apiPermission admin
+ * @apiParam {String} access_token admin access token.
+ * @apiUse listParams
+ * @apiSuccess {Object[]} sessions List of sessions.
+ * @apiError {Object} 400 Some parameters may contain invalid values.
+ * @apiError 401 admin access only.
+ */
+router.all('*',
+  index)
 
 /**
  * @api {post} /session Create session
@@ -28,19 +42,6 @@ const { key, expire, version, ivServer, ivClient, active, createdAt, updatedAt }
 router.post('/session',
   seeding)
 
-/**
- * @api {get} /session Retrieve sessions
- * @apiName RetrieveSessions
- * @apiGroup Session
- * @apiPermission admin
- * @apiParam {String} access_token admin access token.
- * @apiUse listParams
- * @apiSuccess {Object[]} sessions List of sessions.
- * @apiError {Object} 400 Some parameters may contain invalid values.
- * @apiError 401 admin access only.
- */
-router.all('/',
-  index)
 
 /**
  * @api {put} /session/:id Update session

@@ -1,8 +1,10 @@
 import crypto from 'crypto'
-import *  as NodeRSA from 'node-rsa'
-import { secret as configSecret } from '../../config'
-
-const RSAKey = new NodeRSA(configSecret.rsaPvK)
+import { default as NodeRSA} from 'node-rsa'
+import { secrets as configSecret } from '../../config'
+console.log(NodeRSA)
+export const RSAKey = NodeRSA(configSecret.rsaPvK)
+console.log(configSecret.rsaPvK)
+console.log('server RSA Pub', RSAKey.exportKey('public'))
 
 export const getRandomInRange = (max, min) => {
     min = min ? min : 0;
@@ -32,7 +34,7 @@ export const aesEncrypt = (data, secret, iv) => {
 }
 
 export const aesDecryptAndRSAVerify = (load, session, iv) => {
-    const decryptedData = aesDecrypt(load.data, session.key, iv)
+    let decryptedData = aesDecrypt(load.data, session.key, iv)
     try {
         decryptedData = JSON.parse(decryptedData)
     } catch (err) {
@@ -79,7 +81,9 @@ export const rsaVerify = (data, signature, pubKey) => {
         rsa = new NodeRSA()
         rsa.importKey(pubKey, 'public')
     }
-    return rsa.verify(data, signature, 'base64', 'base64')
+    let result = rsa.verify(data, signature, 'utf8', 'base64')
+    console.log(result)
+    return result
 }
 
 export const rsaSign = (data) => RSAKey.sign(data, 'base64')
@@ -113,6 +117,6 @@ export const rsaDecrypt = (data) => RSAKey.decrypt(data, 'utf8')
 
 
 export const createRsa = () => {
-    RSAKey = RSAKey || new NodeRSA(config.secrets.rsaPvK)
+    // RSAKey = RSAKey || new NodeRSA(config.secrets.rsaPvK)
     return RSAKey
 }

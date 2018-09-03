@@ -44,13 +44,13 @@ const sessionSchema = new Schema({
 
 sessionSchema.statics = {
   initRatchet(shared, clientNextIv, clientRSAPublicKey) {
-    if(!shared || !clientPubKey)
+    if(!shared || !clientNextIv || !clientRSAPublicKey)
         return Promise.reject(new Error("DATA_MISSING"))
         let hss = new this()
         hss.key = shared
         hss.expire = Date.now() + 5*60*1000 // 5mn valid time
         hss.version = 1
-        hss.ivClient.push(clientPubKey)
+        hss.ivClient.push(clientNextIv)
         hss.ivServer.push(getRandom('hex'))
         hss.active = true
         hss.clientRsaPublicKey = clientRSAPublicKey

@@ -23,7 +23,10 @@ export default (apiRoot, routes) => {
 
   /* istanbul ignore next */
   if (env === 'production' || env === 'development') {
-    app.use(cors())
+    app.use(cors({
+      exposedHeaders:['x-pajuani-tk', 'x-pajuani-tg', 'x-pajuani-sd'],
+      allowedHeaders: ['x-pajuani-tk', 'x-pajuani-tg', 'x-pajuani-sd']
+    }))
     app.use(compression())
     app.use(morgan('dev'))
   }
@@ -31,6 +34,7 @@ export default (apiRoot, routes) => {
   app.use(bodyParser.urlencoded({ extended: false }))
   app.use(bodyParser.json())
   app.use(filter( { dispatchToErrorHandler: true, appendFound: true}))
+  console.log('base route', apiRoot)
   app.use(apiRoot, routes)
   app.use(queryErrorHandler())
   app.use(bodyErrorHandler())

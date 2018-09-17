@@ -3,12 +3,15 @@ import { Session } from '.'
 import jwt from 'jsonwebtoken'
 import { headers as SessionHeader, jwtIss } from '../../config'
 import * as elliptic from 'elliptic'
+import crypto from 'crypto'
 
 import {
     rsaDecrypt, aesDecrypt, RSAKey,
     rsaVerify, hmacify, rsaEncrypt,
     rsaSign, aesEncrypt, aesDecryptAndRSAVerify, nextSecret
 } from '../../services/encryption'
+
+import { signAndSend, error } from '../../services/response'
 
 const EC = elliptic.ec
 const CURVE = new EC('curve25519')
@@ -25,7 +28,7 @@ export const index = (req, res, next) => {
     var tag = headers[SessionHeader.tag]
     var clientToken = headers[SessionHeader.token]
     var data = headers[SessionHeader.seedData]
-    var ivIdx = headers[SessionHeader.next]
+    var ivIdx = parseInt(headers[SessionHeader.next])
     var authHeader = headers[SessionHeader.authorization]
 
     var basicAuth =  authHeader && authHeader.indexOf('Basic ') === 0 ? authHeader.split('Basic ')[1] : null
@@ -35,15 +38,15 @@ export const index = (req, res, next) => {
     
     if (data && !(req.method === 'POST' || req.method === 'PUT'))
         return res.status(401).send("NOT_AUTHORIZED")
+    if(data)
         req.seedData = Buffer.from(data, 'base64').toString('binary')
-        console.log('check 2', req.seedData)
-    console.log('secret exist?', tag)
+    console.log('check 2', req.seedData)
     if (tag) {
         console.log('secret exist', tag)
         return Session.findById(tag)
             .then((session) => {
                 if (session) {
-                    req.sessionKey = Object.assign({}, session)
+                    req.sessionKey = session.view()
                     if (clientToken) {
                         let tokenArray = clientToken.split('.')
                         let decryptedClientToken = rsaDecrypt(tokenArray[0]) + '.' + rsaDecrypt(tokenArray[1]) + '.' + tokenArray[2]
@@ -53,18 +56,22 @@ export const index = (req, res, next) => {
                         console.log(session)
                         console.log(req.query)
                         console.log(req.body)
-                        const clientIv = nextSecret(session.key, session.ivClient.splice(ivIdx, 1))
-                        if (req.query) {
+                        let ivc = session.ivClient.splice(ivIdx, 1)[0]
+                        const clientIv = nextSecret(session.key, ivc)
+                        console.log('ivc found - idx', clientIv, clientIv.length )
+                        if (Object.keys(req.query).length > 0 ) {
                             try {
+                                console.log('decrypt query')
                                 req.query = aesDecryptAndRSAVerify(req.query, session, clientIv)
                             } catch (err) {
                                 return res.status(401).send('NOT_AUTHORIZED')
                             }
                         }
-                        if (req.body) {
+                        if (Object.keys(req.body).length > 0) {
                             try {
-                                req.body = aesDecryptAndRSAVerify(req.body, session, clientIv)
-                            } catch (err) {
+                                console.log('decrypt body')
+                                req.body.load = aesDecryptAndRSAVerify(req.body, session, clientIv)
+                             } catch (err) {
                                 return res.status(401).send('NOT_AUTHORIZED')
                             }
                         }
@@ -77,23 +84,23 @@ export const index = (req, res, next) => {
                             }
                         }
 
-                        return session.ratchetFoward(req).then((savedSession) => {
+                        return session.ratchetFoward(req, res).then((savedSession) => {
 
-                            res.setHeader(SessionHeader.token, clientToken)
-                            res.setHeader(SessionHeader.tag, savedSession._id)
-                            next( req, res)
-                        })
+                                res.setHeader(SessionHeader.token, clientToken)
+                                res.setHeader(SessionHeader.tag, savedSession._id)
+                                return next(null, req, res)
+                            })
                             .catch((err) => {
                                 return res.status(403).send("SESSION_INVALID")
                             })
                     }
-                    next(req, res)
+                    return next(null, req, res)
                 } else
                     return res.status(401).send("NOT_AUTHORIZED")
             })
             .catch(next)
     } else
-        next(null, req, res)
+        return next(null, req, res)
 }
 
 export const seeding = ({ seedData, sessionKey, method }, res) => {
@@ -109,8 +116,12 @@ export const seeding = ({ seedData, sessionKey, method }, res) => {
             let remoteK = CURVE.keyFromPublic(data.load.ecdh, 'hex')
             let sharedBN = selfServerECDHKeyPair.derive(remoteK.getPublic())
             let shared = sharedBN.toString('hex')
+            //shared = String.fromCharCode(...shared)
+            // shared = Buffer.from(shared)
+            // shared = shared.toString('base64')
             remoteK = null
             console.log('shared calculated: ', shared)
+            shared = normalizeKey(shared)
             // save secreet
             let promise = null
             if (sessionKey) {
@@ -119,7 +130,7 @@ export const seeding = ({ seedData, sessionKey, method }, res) => {
                 promise = Session.initRatchet(shared, data.load.niv, clientRSAPublicKey)
             }
             data = null
-            shared = null
+            // shared = null
             sharedBN = null
             let serverPubEcdh = selfServerECDHKeyPair.getPublic().encode('hex')
             console.log('serverPubEcdh', serverPubEcdh)
@@ -127,12 +138,12 @@ export const seeding = ({ seedData, sessionKey, method }, res) => {
                 let keys = RSAKey.exportKey('public') + '@' +
                     serverPubEcdh + '@' +
                     method + '@' +
-                    newSecret.ivServer.join('.') + '@' +
+                    newSecret.ivServer[0].toString('hex') + '@' + // ? utf8?????
                     newSecret.updatedAt.getTime()
 
                 selfServerECDHKeyPair = null
                 console.log('calculated secret: ', newSecret.key)
-                keys = keys + '@' + hmacify(newSecret.key, keys)
+                keys = keys + '@' + hmacify(shared, keys)
 
                 let data2Encrypt = keys + '@' + rsaSign(keys)
                 let encrypted = rsaEncrypt(data2Encrypt, clientRSAPublicKey)
@@ -158,15 +169,43 @@ export const seeding = ({ seedData, sessionKey, method }, res) => {
     }
 }
 
-export const extendKeys = (req, res) => {
-
+export const extendKeys = ({ body: { load }, sessionKey}, res) => {
+    let keys = load.split('.')
+    console.log('extendKeys', sessionKey, load )
+    return Session.findById(sessionKey.id)
+        .then((session) => {
+            if (session) {
+                    return session.extendsKeys(keys, sessionKey.currentIv)
+                            .then(signAndSend(res))
+                            .catch(error(res))
+            } else 
+                return res.status(code || 500).end("SESSION_ERROR")
+        })
+        .catch(err => {
+            console.log('extendKeys', err)
+        })
+        //.catch(error(res))
 }
 
 export const destroy = ({ sessionKey }, res) => {
     if (sessionKey) {
-        sessionKey.remove()
+        Session.findById(sessionKey.id)
+                .then((session) => session ? session.delete() : null)
+                .then(success(res, 204))
+                .catch(error(res))
     }
     return res.status(204).send()
+}
+
+const normalizeKey = (key)  => {
+    let zeros = '0000'
+    if(key.length > 64 ) {
+        key = key.slice(0, 64)
+    } else if(key.length < 64) {
+        key = zeros.slice(0, 64 % key.length) + key
+    }
+    console.log('key normalized', key)
+    return key
 }
 
 const parseSeedingData = (seedData) => {

@@ -1,10 +1,10 @@
 import mongoose, { Schema } from 'mongoose'
-import { getRandom, getRandomInRange, nextSecret} from '../../services/encryption'
+import { aesEncrypt, getRandom, generateIvArray, getRandomInRange, nextSecret} from '../../services/encryption'
 import { headers as SessionHeader } from '../../config'
 
 const sessionSchema = new Schema({
   key: {
-    type: String,
+    type: Buffer,
     required: true
   },
   expire: {
@@ -16,10 +16,10 @@ const sessionSchema = new Schema({
     type: Number
   },
   ivServer: {
-    type: [String]
+    type: [Buffer]
   },
   ivClient: {
-    type: [String]
+    type: [Buffer]
   },
   clientRsaPublicKey: {
     type: String,
@@ -47,11 +47,11 @@ sessionSchema.statics = {
     if(!shared || !clientNextIv || !clientRSAPublicKey)
         return Promise.reject(new Error("DATA_MISSING"))
         let hss = new this()
-        hss.key = shared
+        hss.key = Buffer.from(shared, "hex") 
         hss.expire = Date.now() + 5*60*1000 // 5mn valid time
         hss.version = 1
-        hss.ivClient.push(clientNextIv)
-        hss.ivServer.push(getRandom('hex'))
+        hss.ivClient.push(Buffer.from(clientNextIv, "hex"))
+        hss.ivServer.push(getRandom())
         hss.active = true
         hss.clientRsaPublicKey = clientRSAPublicKey
       return hss.save()
@@ -63,7 +63,6 @@ sessionSchema.methods = {
     const view = {
       // simple view
       id: this.id,
-      key: this.key,
       expire: this.expire,
       version: this.version,
       ivServer: this.ivServer,
@@ -75,8 +74,9 @@ sessionSchema.methods = {
     }
 
     return full ? {
-      ...view
+      ...view,
       // add properties for a full view
+      key: this.key
     } : view
   },
   resetRatchet(shared, clientPubKey) {
@@ -87,7 +87,7 @@ sessionSchema.methods = {
         this.expire = Date.now() + 5*60*1000 // 5mn valid time
         this.version = 1
         this.ivClient.push(clientPubKey)
-        this.ivServer.push(getRandom('hex'))
+        this.ivServer.push(getRandom())
         this.active = true
         this.updatedAt = Date.now()
       return this.save()
@@ -99,15 +99,39 @@ sessionSchema.methods = {
         return Promise.reject(new Error("SESSION_INVALID"))
       }
 
-      const nextIVIdx = getRandomInRange(this.ivServer.length);
+      const nextIVIdx = this.ivServer.length === 1 ? 0 : getRandomInRange(this.ivServer.length);
       res.setHeader(SessionHeader.next, nextIVIdx)
       // USE this with the key to encrypt
-      req.sessionKey.currentIv = nextSecret(this.key, this.ivClient.splice(nextIVIdx, 1))
+
+      req.sessionKey.currentIv = nextSecret(this.key, this.ivServer.splice(nextIVIdx, 1)[0])
       // expira en 5 mn
       this.expire = Date.now() + 5*60*1000
       this.version++
       this.updatedAt = Date.now()
       return this.save()
+  },
+
+  extendsKeys(keys, currentIv) {
+    let ivBuffer = []
+    keys.map((key) => {
+      ivBuffer.push(Buffer.from(key, 'hex'))
+    })
+    this.ivClient = this.ivClient.concat(ivBuffer)
+    this.ivServer = this.ivServer.concat(generateIvArray(keys.length))
+    // convert all to hex
+    let ivUtf8 = '';
+    this.ivServer.map((iv) => {
+        ivUtf8 += iv.toString('hex') + '.'
+    })
+    ivUtf8 = ivUtf8.slice(0,-1)
+    let encriptedIv = aesEncrypt(ivUtf8, this.key, currentIv)
+    return this.save()
+          .then((session) => {
+            return encriptedIv.toString('hex')
+          })
+          .catch(err => {
+            console.log('extendsKeys', err)
+          })
   }
 }
 

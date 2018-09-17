@@ -1,9 +1,22 @@
+import { rsaSign } from "../encryption";
+
 export const success = (res, status) => (entity) => {
   if (entity) {
     res.status(status || 200).json(entity)
   }
   return null
 }
+
+export const signAndSend =(res, status) => (data) => {
+  if(typeof data !== 'string')
+      data = JSON.stringify(data)
+    let load = {
+      data: data,
+      sig: rsaSign(data)
+    };
+    return res.status(status || 200).json(load)
+}
+
 
 export const error = (res, code) => (err) => {
   if (!err) {

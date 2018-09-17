@@ -24,8 +24,8 @@ export default (apiRoot, routes) => {
   /* istanbul ignore next */
   if (env === 'production' || env === 'development') {
     app.use(cors({
-      exposedHeaders:['x-pajuani-tk', 'x-pajuani-tg', 'x-pajuani-sd'],
-      allowedHeaders: ['x-pajuani-tk', 'x-pajuani-tg', 'x-pajuani-sd']
+      exposedHeaders:[ 'x-pajuani-nx', 'x-pajuani-tk', 'x-pajuani-tg', 'x-pajuani-sd'],
+      allowedHeaders: ['content-type','x-pajuani-nx', 'x-pajuani-tk', 'x-pajuani-tg', 'x-pajuani-sd']
     }))
     app.use(compression())
     app.use(morgan('dev'))

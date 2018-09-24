@@ -34,10 +34,10 @@ export const notFound = (res) => (entity) => {
   return null
 }
 
-export const authorOrAdmin = (res, member, userField) => (entity) => {
+export const authorOrAdmin = (res, identity, userField) => (entity) => {
   if (entity) {
-    const isAdmin = member.role === 'admin'
-    const isAuthor = entity[userField] && entity[userField].equals(member.id)
+    const isAdmin = identity.role === 'admin'
+    const isAuthor = entity[userField] && entity[userField].equals(identity.id)
     if (isAuthor || isAdmin) {
       return entity
     }

@@ -4,19 +4,19 @@ import { middleware as body } from 'bodymen'
 import { password as passwordAuth, master, token } from '../../services/passport'
 import { index, showMe, show, exist, create, update, updatePassword, destroy } from './controller'
 import { schema } from './model'
-export Member, { schema } from './model'
+export Identity, { schema } from './model'
 
 const router = new Router()
 const { email, password, membername, dateOfBirth, picture, role } = schema.tree
 
 /**
- * @api {get} /members Retrieve members
+ * @api {get} /identities Retrieve identities
  * @apiName Retrievemembers
- * @apiGroup Member
+ * @apiGroup Identity
  * @apiPermission admin
- * @apiParam {String} access_token Member access_token.
+ * @apiParam {String} access_token Identity access_token.
  * @apiUse listParams
- * @apiSuccess {Object[]} members List of members.
+ * @apiSuccess {Object[]} identities List of identities.
  * @apiError {Object} 400 Some parameters may contain invalid values.
  * @apiError 401 Admin access only.
  */
@@ -32,12 +32,12 @@ router.get('/',
   index)
 
 /**
- * @api {get} /members/me Retrieve current member
+ * @api {get} /identities/me Retrieve current identity
  * @apiName RetrieveCurrentmember
- * @apiGroup Member
- * @apiPermission member
- * @apiParam {String} access_token Member access_token.
- * @apiSuccess {Object} member Member's data.
+ * @apiGroup Identity
+ * @apiPermission identity
+ * @apiParam {String} access_token Identity access_token.
+ * @apiSuccess {Object} identity Identity's data.
  */
 router.get('/me',
   token({ required: true }),
@@ -45,12 +45,12 @@ router.get('/me',
 
 
   /**
- * @api {get} /members/me Retrieve current member
+ * @api {get} /identities/me Retrieve current identity
  * @apiName RetrieveCurrentmember
- * @apiGroup Member
- * @apiPermission member
- * @apiParam {String} access_token Member access_token.
- * @apiSuccess {Object} member Member's data.
+ * @apiGroup Identity
+ * @apiPermission identity
+ * @apiParam {String} access_token Identity access_token.
+ * @apiSuccess {Object} identity Identity's data.
  */
 router.get('/exist',
 /* master(), */
@@ -63,28 +63,28 @@ query({
 exist)
 
 /**
- * @api {get} /members/:id Retrieve member
+ * @api {get} /identities/:id Retrieve identity
  * @apiName Retrievemember
- * @apiGroup Member
+ * @apiGroup Identity
  * @apiPermission public
- * @apiSuccess {Object} member Member's data.
- * @apiError 404 Member not found.
+ * @apiSuccess {Object} identity Identity's data.
+ * @apiError 404 Identity not found.
  */
 router.get('/:id',
   show)
 
 /**
- * @api {post} /members Create member
+ * @api {post} /identities Create identity
  * @apiName Createmember
- * @apiGroup Member
+ * @apiGroup Identity
  * @apiPermission master
  * @apiParam {String} access_token Master access_token.
- * @apiParam {String} email Member's email.
- * @apiParam {String{6..}} password Member's password.
- * @apiParam {String} [name] Member's name.
- * @apiParam {String} [picture] Member's picture.
- * @apiParam {String=member,admin} [role=member] Member's role.
- * @apiSuccess (Sucess 201) {Object} member Member's data.
+ * @apiParam {String} email Identity's email.
+ * @apiParam {String{6..}} password Identity's password.
+ * @apiParam {String} [name] Identity's name.
+ * @apiParam {String} [picture] Identity's picture.
+ * @apiParam {String=identity,admin} [role=identity] Identity's role.
+ * @apiSuccess (Sucess 201) {Object} identity Identity's data.
  * @apiError {Object} 400 Some parameters may contain invalid values.
  * @apiError 401 Master access only.
  * @apiError 409 Email already registered.
@@ -95,17 +95,17 @@ router.post('/',
   create)
 
 /**
- * @api {put} /members/:id Update member
+ * @api {put} /identities/:id Update identity
  * @apiName Updatemember
- * @apiGroup Member
- * @apiPermission member
- * @apiParam {String} access_token Member access_token.
- * @apiParam {String} [name] Member's name.
- * @apiParam {String} [picture] Member's picture.
- * @apiSuccess {Object} member Member's data.
+ * @apiGroup Identity
+ * @apiPermission identity
+ * @apiParam {String} access_token Identity access_token.
+ * @apiParam {String} [name] Identity's name.
+ * @apiParam {String} [picture] Identity's picture.
+ * @apiSuccess {Object} identity Identity's data.
  * @apiError {Object} 400 Some parameters may contain invalid values.
- * @apiError 401 Current member or admin access only.
- * @apiError 404 Member not found.
+ * @apiError 401 Current identity or admin access only.
+ * @apiError 404 Identity not found.
  */
 router.put('/:id',
   token({ required: true }),
@@ -113,15 +113,15 @@ router.put('/:id',
   update)
 
 /**
- * @api {put} /members/:id/password Update password
+ * @api {put} /identities/:id/password Update password
  * @apiName UpdatePassword
- * @apiGroup Member
+ * @apiGroup Identity
  * @apiHeader {String} Authorization Basic authorization with email and password.
- * @apiParam {String{6..}} password Member's new password.
- * @apiSuccess (Success 201) {Object} member Member's data.
+ * @apiParam {String{6..}} password Identity's new password.
+ * @apiSuccess (Success 201) {Object} identity Identity's data.
  * @apiError {Object} 400 Some parameters may contain invalid values.
- * @apiError 401 Current member access only.
- * @apiError 404 Member not found.
+ * @apiError 401 Current identity access only.
+ * @apiError 404 Identity not found.
  */
 router.put('/:id/password',
   passwordAuth(),
@@ -129,14 +129,14 @@ router.put('/:id/password',
   updatePassword)
 
 /**
- * @api {delete} /members/:id Delete member
+ * @api {delete} /identities/:id Delete identity
  * @apiName Deletemember
- * @apiGroup Member
+ * @apiGroup Identity
  * @apiPermission admin
- * @apiParam {String} access_token Member access_token.
+ * @apiParam {String} access_token Identity access_token.
  * @apiSuccess (Success 204) 204 No Content.
  * @apiError 401 Admin access only.
- * @apiError 404 Member not found.
+ * @apiError 404 Identity not found.
  */
 router.delete('/:id',
   token({ required: true, roles: ['admin'] }),

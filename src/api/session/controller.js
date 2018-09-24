@@ -38,7 +38,7 @@ export const index = (req, res, next) => {
     
     if (data && !(req.method === 'POST' || req.method === 'PUT'))
         return res.status(401).send("NOT_AUTHORIZED")
-    if(data)
+    if (data)
         req.seedData = Buffer.from(data, 'base64').toString('binary')
     console.log('check 2', req.seedData)
     if (tag) {

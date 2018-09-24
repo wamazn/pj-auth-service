@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import member from './member'
+import identity from './identity'
 import auth from './auth'
 import passwordReset from './password-reset'
 import session from './session'
@@ -17,7 +17,7 @@ const router = new Router()
  * to access this endpoint.
  */
 /**
- * @apiDefine member Member access only
+ * @apiDefine identity Identity access only
  * You must pass `access_token` parameter or a Bearer Token authorization header
  * to access this endpoint.
  */
@@ -30,7 +30,7 @@ const router = new Router()
  * @apiParam {String[]} [fields] Fields to be returned.
  */
 router.use('/', session)
-router.use('/members', member)
+router.use('/identities', identity)
 router.use('/auth', auth)
 router.use('/password-resets', passwordReset)
 

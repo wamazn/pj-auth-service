@@ -2,16 +2,16 @@ import request from 'supertest'
 import { masterKey, apiRoot } from '../../config'
 import { signSync } from '../../services/jwt'
 import express from '../../services/express'
-import routes, { Member } from '.'
+import routes, { Identity } from '.'
 
 const app = () => express(apiRoot, routes)
 
 let user1, user2, admin, session1, session2, adminSession
 
 beforeEach(async () => {
-  user1 = await Member.create({ name: 'member', email: 'a@a.com', password: '123456' })
-  user2 = await Member.create({ name: 'member', email: 'b@b.com', password: '123456' })
-  admin = await Member.create({ email: 'c@c.com', password: '123456', role: 'admin' })
+  user1 = await Identity.create({ name: 'identity', email: 'a@a.com', password: '123456' })
+  user2 = await Identity.create({ name: 'identity', email: 'b@b.com', password: '123456' })
+  admin = await Identity.create({ email: 'c@c.com', password: '123456', role: 'admin' })
   session1 = signSync(user1.id)
   session2 = signSync(user2.id)
   adminSession = signSync(admin.id)
@@ -36,10 +36,10 @@ test('GET /users?page=2&limit=1 200 (admin)', async () => {
   expect(body.rows.length).toBe(1)
 })
 
-test('GET /users?q=member 200 (admin)', async () => {
+test('GET /users?q=identity 200 (admin)', async () => {
   const { status, body } = await request(app())
     .get(apiRoot)
-    .query({ access_token: adminSession, q: 'member' })
+    .query({ access_token: adminSession, q: 'identity' })
   expect(status).toBe(200)
   expect(Array.isArray(body.rows)).toBe(true)
   expect(Number.isNaN(body.count)).toBe(false)
@@ -56,7 +56,7 @@ test('GET /users?fields=name 200 (admin)', async () => {
   expect(Object.keys(body.rows[0])).toEqual(['id', 'name'])
 })
 
-test('GET /users 401 (member)', async () => {
+test('GET /users 401 (identity)', async () => {
   const { status } = await request(app())
     .get(apiRoot)
     .query({ access_token: session1 })
@@ -69,7 +69,7 @@ test('GET /users 401', async () => {
   expect(status).toBe(401)
 })
 
-test('GET /users/me 200 (member)', async () => {
+test('GET /users/me 200 (identity)', async () => {
   const { status, body } = await request(app())
     .get(apiRoot + '/me')
     .query({ access_token: session1 })
@@ -104,20 +104,20 @@ test('POST /users 201 (master)', async () => {
     .send({ access_token: masterKey, email: 'd@d.com', password: '123456' })
   expect(status).toBe(201)
   expect(typeof body).toBe('object')
-  expect(typeof body.member).toBe('object')
+  expect(typeof body.identity).toBe('object')
   expect(typeof body.token).toBe('string')
-  expect(body.member.email).toBe('d@d.com')
+  expect(body.identity.email).toBe('d@d.com')
 })
 
 test('POST /users 201 (master)', async () => {
   const { status, body } = await request(app())
     .post(apiRoot)
-    .send({ access_token: masterKey, email: 'd@d.com', password: '123456', role: 'member' })
+    .send({ access_token: masterKey, email: 'd@d.com', password: '123456', role: 'identity' })
   expect(status).toBe(201)
   expect(typeof body).toBe('object')
-  expect(typeof body.member).toBe('object')
+  expect(typeof body.identity).toBe('object')
   expect(typeof body.token).toBe('string')
-  expect(body.member.email).toBe('d@d.com')
+  expect(body.identity.email).toBe('d@d.com')
 })
 
 test('POST /users 201 (master)', async () => {
@@ -126,9 +126,9 @@ test('POST /users 201 (master)', async () => {
     .send({ access_token: masterKey, email: 'd@d.com', password: '123456', role: 'admin' })
   expect(status).toBe(201)
   expect(typeof body).toBe('object')
-  expect(typeof body.member).toBe('object')
+  expect(typeof body.identity).toBe('object')
   expect(typeof body.token).toBe('string')
-  expect(body.member.email).toBe('d@d.com')
+  expect(body.identity.email).toBe('d@d.com')
 })
 
 test('POST /users 409 (master) - duplicated email', async () => {
@@ -192,7 +192,7 @@ test('POST /users 401 (admin)', async () => {
   expect(status).toBe(401)
 })
 
-test('POST /users 401 (member)', async () => {
+test('POST /users 401 (identity)', async () => {
   const { status } = await request(app())
     .post(apiRoot)
     .send({ access_token: session1, email: 'd@d.com', password: '123456' })
@@ -206,7 +206,7 @@ test('POST /users 401', async () => {
   expect(status).toBe(401)
 })
 
-test('PUT /users/me 200 (member)', async () => {
+test('PUT /users/me 200 (identity)', async () => {
   const { status, body } = await request(app())
     .put(apiRoot + '/me')
     .send({ access_token: session1, name: 'test' })
@@ -215,7 +215,7 @@ test('PUT /users/me 200 (member)', async () => {
   expect(body.name).toBe('test')
 })
 
-test('PUT /users/me 200 (member)', async () => {
+test('PUT /users/me 200 (identity)', async () => {
   const { status, body } = await request(app())
     .put(apiRoot + '/me')
     .send({ access_token: session1, email: 'test@test.com' })
@@ -231,7 +231,7 @@ test('PUT /users/me 401', async () => {
   expect(status).toBe(401)
 })
 
-test('PUT /users/:id 200 (member)', async () => {
+test('PUT /users/:id 200 (identity)', async () => {
   const { status, body } = await request(app())
     .put(`${apiRoot}/${user1.id}`)
     .send({ access_token: session1, name: 'test' })
@@ -240,7 +240,7 @@ test('PUT /users/:id 200 (member)', async () => {
   expect(body.name).toBe('test')
 })
 
-test('PUT /users/:id 200 (member)', async () => {
+test('PUT /users/:id 200 (identity)', async () => {
   const { status, body } = await request(app())
     .put(`${apiRoot}/${user1.id}`)
     .send({ access_token: session1, email: 'test@test.com' })
@@ -258,7 +258,7 @@ test('PUT /users/:id 200 (admin)', async () => {
   expect(body.name).toBe('test')
 })
 
-test('PUT /users/:id 401 (member) - another member', async () => {
+test('PUT /users/:id 401 (identity) - another identity', async () => {
   const { status } = await request(app())
     .put(`${apiRoot}/${user1.id}`)
     .send({ access_token: session2, name: 'test' })
@@ -280,11 +280,11 @@ test('PUT /users/:id 404 (admin)', async () => {
 })
 
 const passwordMatch = async (password, userId) => {
-  const member = await Member.findById(userId)
-  return !!await member.authenticate(password)
+  const identity = await Identity.findById(userId)
+  return !!await identity.authenticate(password)
 }
 
-test('PUT /users/me/password 200 (member)', async () => {
+test('PUT /users/me/password 200 (identity)', async () => {
   const { status, body } = await request(app())
     .put(apiRoot + '/me/password')
     .auth('a@a.com', '123456')
@@ -295,7 +295,7 @@ test('PUT /users/me/password 200 (member)', async () => {
   expect(await passwordMatch('654321', body.id)).toBe(true)
 })
 
-test('PUT /users/me/password 400 (member) - invalid password', async () => {
+test('PUT /users/me/password 400 (identity) - invalid password', async () => {
   const { status, body } = await request(app())
     .put(apiRoot + '/me/password')
     .auth('a@a.com', '123456')
@@ -305,7 +305,7 @@ test('PUT /users/me/password 400 (member) - invalid password', async () => {
   expect(body.param).toBe('password')
 })
 
-test('PUT /users/me/password 401 (member) - invalid authentication method', async () => {
+test('PUT /users/me/password 401 (identity) - invalid authentication method', async () => {
   const { status } = await request(app())
     .put(apiRoot + '/me/password')
     .send({ access_token: session1, password: '654321' })
@@ -319,7 +319,7 @@ test('PUT /users/me/password 401', async () => {
   expect(status).toBe(401)
 })
 
-test('PUT /users/:id/password 200 (member)', async () => {
+test('PUT /users/:id/password 200 (identity)', async () => {
   const { status, body } = await request(app())
     .put(`${apiRoot}/${user1.id}/password`)
     .auth('a@a.com', '123456')
@@ -330,7 +330,7 @@ test('PUT /users/:id/password 200 (member)', async () => {
   expect(await passwordMatch('654321', body.id)).toBe(true)
 })
 
-test('PUT /users/:id/password 400 (member) - invalid password', async () => {
+test('PUT /users/:id/password 400 (identity) - invalid password', async () => {
   const { status, body } = await request(app())
     .put(`${apiRoot}/${user1.id}/password`)
     .auth('a@a.com', '123456')
@@ -340,7 +340,7 @@ test('PUT /users/:id/password 400 (member) - invalid password', async () => {
   expect(body.param).toBe('password')
 })
 
-test('PUT /users/:id/password 401 (member) - another member', async () => {
+test('PUT /users/:id/password 401 (identity) - another identity', async () => {
   const { status } = await request(app())
     .put(`${apiRoot}/${user1.id}/password`)
     .auth('b@b.com', '123456')
@@ -348,7 +348,7 @@ test('PUT /users/:id/password 401 (member) - another member', async () => {
   expect(status).toBe(401)
 })
 
-test('PUT /users/:id/password 401 (member) - invalid authentication method', async () => {
+test('PUT /users/:id/password 401 (identity) - invalid authentication method', async () => {
   const { status } = await request(app())
     .put(`${apiRoot}/${user1.id}/password`)
     .send({ access_token: session1, password: '654321' })
@@ -362,7 +362,7 @@ test('PUT /users/:id/password 401', async () => {
   expect(status).toBe(401)
 })
 
-test('PUT /users/:id/password 404 (member)', async () => {
+test('PUT /users/:id/password 404 (identity)', async () => {
   const { status } = await request(app())
     .put(apiRoot + '/123456789098765432123456/password')
     .auth('a@a.com', '123456')
@@ -377,7 +377,7 @@ test('DELETE /users/:id 204 (admin)', async () => {
   expect(status).toBe(204)
 })
 
-test('DELETE /users/:id 401 (member)', async () => {
+test('DELETE /users/:id 401 (identity)', async () => {
   const { status } = await request(app())
     .delete(`${apiRoot}/${user1.id}`)
     .send({ access_token: session1 })

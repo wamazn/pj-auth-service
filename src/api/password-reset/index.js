@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { middleware as body } from 'bodymen'
 import { master } from '../../services/passport'
 import { create, show, update } from './controller'
-import { schema } from '../member'
+import { schema } from '../identity'
 export PasswordReset, { schema } from './model'
 
 const router = new Router()
@@ -14,7 +14,7 @@ const { email, password } = schema.tree
  * @apiGroup PasswordReset
  * @apiPermission master
  * @apiParam {String} email Email address to receive the password reset token.
- * @apiParam {String} link Link to redirect member.
+ * @apiParam {String} link Link to redirect identity.
  * @apiSuccess (Success 202) 202 Accepted.
  * @apiError {Object} 400 Some parameters may contain invalid values.
  */
@@ -28,7 +28,7 @@ router.post('/',
  * @apiName VerifyPasswordReset
  * @apiGroup PasswordReset
  * @apiSuccess {String} token Password reset token.
- * @apiSuccess {Object} member Member's data.
+ * @apiSuccess {Object} identity Identity's data.
  * @apiError 404 Token has expired or doesn't exist.
  */
 router.get('/:token',
@@ -38,8 +38,8 @@ router.get('/:token',
  * @api {put} /password-resets/:token Submit password
  * @apiName SubmitPasswordReset
  * @apiGroup PasswordReset
- * @apiParam {String{6..}} password Member's new password.
- * @apiSuccess {Object} member Member's data.
+ * @apiParam {String{6..}} password Identity's new password.
+ * @apiSuccess {Object} identity Identity's data.
  * @apiError {Object} 400 Some parameters may contain invalid values.
  * @apiError 404 Token has expired or doesn't exist.
  */

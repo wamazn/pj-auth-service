@@ -1,7 +1,7 @@
 import nock from 'nock'
 import * as google from '.'
 
-it('parses google member', async () => {
+it('parses google identity', async () => {
   const ggUser = {
     id: '123',
     email: 'email@example.com',

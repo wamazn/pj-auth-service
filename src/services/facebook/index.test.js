@@ -1,7 +1,7 @@
 import nock from 'nock'
 import * as facebook from '.'
 
-it('parses facebook member', async () => {
+it('parses facebook identity', async () => {
   const fbUser = {
     id: '123',
     name: 'Test name',

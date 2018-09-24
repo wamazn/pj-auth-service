@@ -44,12 +44,12 @@ describe('notFound', () => {
 })
 
 describe('authorOrAdmin', () => {
-  let member, entity
+  let identity, entity
 
   beforeEach(() => {
-    member = {
+    identity = {
       id: 1,
-      role: 'member'
+      role: 'identity'
     }
     entity = {
       author: {
@@ -62,22 +62,22 @@ describe('authorOrAdmin', () => {
   })
 
   it('returns the passed entity when author is the same', () => {
-    expect(response.authorOrAdmin(res, member, 'author')(entity)).toEqual(entity)
+    expect(response.authorOrAdmin(res, identity, 'author')(entity)).toEqual(entity)
   })
 
   it('returns the passed entity when author is admin', () => {
-    member.role = 'admin'
-    expect(response.authorOrAdmin(res, member, 'member')(entity)).toEqual(entity)
+    identity.role = 'admin'
+    expect(response.authorOrAdmin(res, identity, 'identity')(entity)).toEqual(entity)
   })
 
   it('responds with status 401 when author is not the same or admin', () => {
-    member.id = 2
-    expect(response.authorOrAdmin(res, member, 'author')(entity)).toBeNull()
+    identity.id = 2
+    expect(response.authorOrAdmin(res, identity, 'author')(entity)).toBeNull()
     expect(res.status).toBeCalledWith(401)
     expect(res.end).toHaveBeenCalledTimes(1)
   })
 
   it('returns null without sending response when entity has not been passed', () => {
-    expect(response.authorOrAdmin(res, member, 'author')()).toBeNull()
+    expect(response.authorOrAdmin(res, identity, 'author')()).toBeNull()
   })
 })

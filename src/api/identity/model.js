@@ -122,12 +122,12 @@ memberSchema.statics = {
   roles,
 
   createFromService ({ service, id, email, name, picture }) {
-    return this.findOne({ $or: [{ [`services.${service}`]: id }, { email }] }).then((member) => {
-      if (member) {
-        member.services[service] = id
-        member.membername = name
-        member.picture = picture
-        return member.save()
+    return this.findOne({ $or: [{ [`services.${service}`]: id }, { email }] }).then((identity) => {
+      if (identity) {
+        identity.services[service] = id
+        identity.membername = name
+        identity.picture = picture
+        return identity.save()
       } else {
         const password = randtoken.generate(16)
         return this.create({ services: { [service]: id }, email, password, membername: name, picture })
@@ -138,7 +138,7 @@ memberSchema.statics = {
 
 memberSchema.plugin(mongooseKeywords, { paths: ['email', 'membername'] })
 
-const model = mongoose.model('Member', memberSchema)
+const model = mongoose.model('Identity', memberSchema)
 
 export const schema = model.schema
 export default model

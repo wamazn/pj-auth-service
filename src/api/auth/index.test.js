@@ -1,7 +1,7 @@
 import { stub } from 'sinon'
 import request from 'supertest'
 import { masterKey, apiRoot } from '../../config'
-import { Member } from '../member'
+import { Identity } from '../identity'
 import { verify } from '../../services/jwt'
 import * as facebook from '../../services/facebook'
 import * as google from '../../services/google'
@@ -10,10 +10,10 @@ import routes from '.'
 
 const app = () => express(apiRoot, routes)
 
-let member
+let identity
 
 beforeEach(async () => {
-  member = await Member.create({ email: 'a@a.com', password: '123456' })
+  identity = await Identity.create({ email: 'a@a.com', password: '123456' })
 })
 
 test('POST /auth 201 (master)', async () => {
@@ -24,8 +24,8 @@ test('POST /auth 201 (master)', async () => {
   expect(status).toBe(201)
   expect(typeof body).toBe('object')
   expect(typeof body.token).toBe('string')
-  expect(typeof body.member).toBe('object')
-  expect(body.member.id).toBe(member.id)
+  expect(typeof body.identity).toBe('object')
+  expect(body.identity.id).toBe(identity.id)
   expect(await verify(body.token)).toBeTruthy()
 })
 
@@ -49,7 +49,7 @@ test('POST /auth 400 (master) - invalid password', async () => {
   expect(body.param).toBe('password')
 })
 
-test('POST /auth 401 (master) - member does not exist', async () => {
+test('POST /auth 401 (master) - identity does not exist', async () => {
   const { status } = await request(app())
     .post(apiRoot)
     .query({ access_token: masterKey })
@@ -83,7 +83,7 @@ test('POST /auth/facebook 201', async () => {
   stub(facebook, 'getUser').value(() => Promise.resolve({
     service: 'facebook',
     id: '123',
-    name: 'member',
+    name: 'identity',
     email: 'b@b.com',
     picture: 'test.jpg'
   }))
@@ -93,7 +93,7 @@ test('POST /auth/facebook 201', async () => {
   expect(status).toBe(201)
   expect(typeof body).toBe('object')
   expect(typeof body.token).toBe('string')
-  expect(typeof body.member).toBe('object')
+  expect(typeof body.identity).toBe('object')
   expect(await verify(body.token)).toBeTruthy()
 })
 
@@ -107,7 +107,7 @@ test('POST /auth/google 201', async () => {
   stub(google, 'getUser').value(() => Promise.resolve({
     service: 'google',
     id: '123',
-    name: 'member',
+    name: 'identity',
     email: 'b@b.com',
     picture: 'test.jpg'
   }))
@@ -117,7 +117,7 @@ test('POST /auth/google 201', async () => {
   expect(status).toBe(201)
   expect(typeof body).toBe('object')
   expect(typeof body.token).toBe('string')
-  expect(typeof body.member).toBe('object')
+  expect(typeof body.identity).toBe('object')
   expect(await verify(body.token)).toBeTruthy()
 })
 

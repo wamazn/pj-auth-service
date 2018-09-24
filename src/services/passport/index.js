@@ -6,18 +6,18 @@ import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt'
 import { jwtSecret, masterKey } from '../../config'
 import * as facebookService from '../facebook'
 import * as googleService from '../google'
-import Member, { schema } from '../../api/member/model'
+import Identity, { schema } from '../../api/identity/model'
 
 export const password = () => (req, res, next) =>
-  passport.authenticate('password', { session: false }, (err, member, info) => {
+  passport.authenticate('password', { session: false }, (err, identity, info) => {
     if (err && err.param) {
       return res.status(400).json(err)
-    } else if (err || !member) {
+    } else if (err || !identity) {
       return res.status(401).end()
     }
-    req.logIn(member, { session: false }, (err) => {
+    req.logIn(identity, { session: false }, (err) => {
       if (err) return res.status(401).end()
-      req.member = req.user
+      req.identity = req.user
       delete req.user
       next()
     })
@@ -32,14 +32,14 @@ export const google = () =>
 export const master = () =>
   passport.authenticate('master', { session: false })
 
-export const token = ({ required, roles = Member.roles } = {}) => (req, res, next) =>
-  passport.authenticate('token', { session: false }, (err, member, info) => {
-    if (err || (required && !member) || (required && !~roles.indexOf(member.role))) {
+export const token = ({ required, roles = Identity.roles } = {}) => (req, res, next) =>
+  passport.authenticate('token', { session: false }, (err, identity, info) => {
+    if (err || (required && !identity) || (required && !~roles.indexOf(identity.role))) {
       return res.status(401).end()
     }
-    req.logIn(member, { session: false }, (err) => {
+    req.logIn(identity, { session: false }, (err) => {
       if (err) return res.status(401).end()
-      req.member = req.user
+      req.identity = req.user
       delete req.user
       next()
     })
@@ -52,32 +52,32 @@ passport.use('password', new BasicStrategy((membername, password, done) => {
     if (err) done(err)
   })
 
-  Member.findOne({ membername }).then((member) => {
-    if (!member) {
+  Identity.findOne({ membername }).then((identity) => {
+    if (!identity) {
       done(true)
       return null
     }
-    return member.authenticate(password, member.password).then((member) => {
-      done(null, member)
+    return identity.authenticate(password, identity.password).then((identity) => {
+      done(null, identity)
       return null
     }).catch(done)
   })
 }))
 
 passport.use('facebook', new BearerStrategy((token, done) => {
-  facebookService.getUser(token).then((member) => {
-    return Member.createFromService(member)
-  }).then((member) => {
-    done(null, member)
+  facebookService.getUser(token).then((identity) => {
+    return Identity.createFromService(identity)
+  }).then((identity) => {
+    done(null, identity)
     return null
   }).catch(done)
 }))
 
 passport.use('google', new BearerStrategy((token, done) => {
-  googleService.getUser(token).then((member) => {
-    return Member.createFromService(member)
-  }).then((member) => {
-    done(null, member)
+  googleService.getUser(token).then((identity) => {
+    return Identity.createFromService(identity)
+  }).then((identity) => {
+    done(null, identity)
     return null
   }).catch(done)
 }))
@@ -100,8 +100,8 @@ passport.use('token', new JwtStrategy({
     //ExtractJwt.fromHeader('customHeader')
   ])
 }, ({ id }, done) => {
-  Member.findById(id).then((member) => {
-    done(null, member)
+  Identity.findById(id).then((identity) => {
+    done(null, identity)
     return null
   }).catch(done)
 }))

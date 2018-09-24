@@ -2,17 +2,17 @@ import request from 'supertest'
 import nock from 'nock'
 import express from '../../services/express'
 import { masterKey, apiRoot } from '../../config'
-import { Member } from '../member'
+import { Identity } from '../identity'
 import routes, { PasswordReset } from '.'
 
 const app = () => express(apiRoot, routes)
 
-let member, passwordReset
+let identity, passwordReset
 
 beforeEach(async () => {
   nock('https://api.sendgrid.com').post('/v3/mail/send').reply(202)
-  member = await Member.create({ email: 'a@a.com', password: '123456' })
-  passwordReset = await PasswordReset.create({ member })
+  identity = await Identity.create({ email: 'a@a.com', password: '123456' })
+  passwordReset = await PasswordReset.create({ identity })
 })
 
 afterEach(() => {
@@ -72,8 +72,8 @@ test('GET /password-resets/:token 200', async () => {
   expect(status).toBe(200)
   expect(typeof body).toBe('object')
   expect(typeof body.token).toBe('string')
-  expect(typeof body.member).toBe('object')
-  expect(body.member.id).toBe(member.id)
+  expect(typeof body.identity).toBe('object')
+  expect(body.identity.id).toBe(identity.id)
 })
 
 test('GET /password-resets/:token 404', async () => {
@@ -82,17 +82,17 @@ test('GET /password-resets/:token 404', async () => {
 })
 
 test('PUT /password-resets/:token 200', async () => {
-  await PasswordReset.create({ member })
+  await PasswordReset.create({ identity })
   const { status, body } = await request(app())
     .put(`${apiRoot}/${passwordReset.token}`)
     .send({ password: '654321' })
   const [ updatedUser, passwordResets ] = await Promise.all([
-    Member.findById(passwordReset.member.id),
+    Identity.findById(passwordReset.identity.id),
     PasswordReset.find({})
   ])
   expect(status).toBe(200)
   expect(typeof body).toBe('object')
-  expect(body.id).toBe(member.id)
+  expect(body.id).toBe(identity.id)
   expect(passwordResets.length).toBe(0)
   expect(await updatedUser.authenticate('123456')).toBeFalsy()
   expect(await updatedUser.authenticate('654321')).toBeTruthy()

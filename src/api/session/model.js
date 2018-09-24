@@ -124,7 +124,9 @@ sessionSchema.methods = {
         ivUtf8 += iv.toString('hex') + '.'
     })
     ivUtf8 = ivUtf8.slice(0,-1)
+    console.log('currentIV', currentIv)
     let encriptedIv = aesEncrypt(ivUtf8, this.key, currentIv)
+    console.log('encriptedIv', encriptedIv.toString('hex'))
     return this.save()
           .then((session) => {
             return encriptedIv.toString('hex')

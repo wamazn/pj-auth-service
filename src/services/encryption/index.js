@@ -18,7 +18,7 @@ export const getRandom = (keylen) => {
 export const generateIvArray = (length) => {
     console.log('generateIvArray', length);
     const ivs = [];
-    for (let i = 0; i <= length; i++) {
+    for (let i = 0; i < length; i++) {
         ivs.push(getRandom());
     }
     return ivs

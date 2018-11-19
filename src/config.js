@@ -19,7 +19,7 @@ if (process.env.NODE_ENV !== 'production') {
     sample: path.join(__dirname, '../.env.example')
   })
 }
-
+console.log("ENV", process.env)
 const config = {
   all: {
     env: process.env.NODE_ENV || 'development',
@@ -71,7 +71,7 @@ const config = {
     ip: process.env.IP || undefined,
     port: process.env.PORT || 8080,
     mongo: {
-      uri: process.env.MONGODB_URI || 'mongodb://localhost/pajuani-oauth'
+      uri: process.env.MONGODB_URI || 'mongodb://oauthservice:OauthPass139@ds251210.mlab.com:51210/pajuani',
     }
   }
 }

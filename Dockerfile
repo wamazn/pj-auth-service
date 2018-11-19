@@ -1,4 +1,4 @@
-FROM node:alpine
+FROM node:10-alpine as release
 
 # Create app directory
 WORKDIR /usr/src/app
@@ -8,9 +8,11 @@ WORKDIR /usr/src/app
 # where available (npm@5+)
 COPY package*.json ./
 
-RUN npm install --only=production
-# If you are building your code for production
-# RUN npm install --only=production
+RUN apk add --no-cache --virtual deps \
+  python \
+  build-base \
+  && npm install --only=production \
+  && apk del deps 
 
 # Bundle app source
 COPY . .

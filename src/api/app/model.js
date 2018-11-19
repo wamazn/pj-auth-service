@@ -12,7 +12,7 @@ const memberSchema = new Schema({
         type: String,
         required: true,
         unique: true,
-        default: genertateRandKey()
+        default: genertateRandKey
     },
     name: {
         type: String,
@@ -47,7 +47,7 @@ const memberSchema = new Schema({
         type: String,
         required: true,
         minlength: 16,
-        default: genertateRandKey()
+        default: genertateRandKey
     },
     admin: {
         type: String,

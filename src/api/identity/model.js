@@ -23,7 +23,7 @@ const memberSchema = new Schema({
   },
   key: {
     type: String,
-    required: false, // TODO change to true
+    required: true, // TODO change to true
     minlength: 4
   },
   is2WayAuth : {
@@ -38,6 +38,7 @@ const memberSchema = new Schema({
     lowercase: true,
     unique: true
   },
+  thumbnail: String,
   services: {
     facebook: String,
     google: String
@@ -52,15 +53,6 @@ const memberSchema = new Schema({
     required: true,
     default: Date.now
   },
-  dateOfBirth: {
-    type: Date,
-    required: true
-  },
-  modifiedAt: {
-    type: Date,
-    required: true,
-    default: Date.now
-  },
   lastloginIp: {
     trim: true,
     type: String
@@ -71,15 +63,6 @@ const memberSchema = new Schema({
   },
 }, {
   timestamps: true
-})
-
-memberSchema.path('email').set(function (email) {
-  if (!this.picture || this.picture.indexOf('https://gravatar.com') === 0) {
-    const hash = crypto.createHash('md5').update(email).digest('hex')
-    this.picture = `https://gravatar.com/avatar/${hash}?d=identicon`
-  }
-
-  return email
 })
 
 memberSchema.pre('save', function (next) {
@@ -97,10 +80,10 @@ memberSchema.pre('save', function (next) {
 memberSchema.methods = {
   view (full) {
     let view = {}
-    let fields = ['id', 'membername', 'picture']
+    let fields = ['id', 'membername', 'thumbnail', 'email']
 
     if (full) {
-      fields = [...fields, 'email', 'createdAt']
+      fields = [...fields,'lastloginDate', 'createdAt']
     }
 
     fields.forEach((field) => { view[field] = this[field] })
@@ -126,11 +109,11 @@ memberSchema.statics = {
       if (identity) {
         identity.services[service] = id
         identity.membername = name
-        identity.picture = picture
+        identity.thumbnail = picture
         return identity.save()
       } else {
         const password = randtoken.generate(16)
-        return this.create({ services: { [service]: id }, email, password, membername: name, picture })
+        return this.create({ services: { [service]: id }, email, password, thumbnail: picture, membername: name })
       }
     })
   }

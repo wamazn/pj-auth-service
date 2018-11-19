@@ -2,34 +2,17 @@ import { Router } from 'express'
 import { middleware as query } from 'querymen'
 import { middleware as body } from 'bodymen'
 import { password as passwordAuth, master, token } from '../../services/passport'
-import { index, showMe, show, exist, create, update, updatePassword, destroy } from './controller'
+import { index, 
+  showMe, show, 
+  exist, preview, 
+  create, update, 
+  updatePassword, 
+  destroy } from './controller'
 import { schema } from './model'
 export Identity, { schema } from './model'
 
 const router = new Router()
-const { email, password, membername, dateOfBirth, picture, role } = schema.tree
-
-/**
- * @api {get} /identities Retrieve identities
- * @apiName Retrievemembers
- * @apiGroup Identity
- * @apiPermission admin
- * @apiParam {String} access_token Identity access_token.
- * @apiUse listParams
- * @apiSuccess {Object[]} identities List of identities.
- * @apiError {Object} 400 Some parameters may contain invalid values.
- * @apiError 401 Admin access only.
- */
-router.get('/',
-  token({ required: true, roles: ['admin'] }),
-  query(/* {
-    after: {
-      type: Date,
-      paths: ['updatedAt'],
-      operator: '$gte'
-    }
-  } */),
-  index)
+const { email, password, key, membername, thumbnail} = schema.tree
 
 /**
  * @api {get} /identities/me Retrieve current identity
@@ -44,23 +27,44 @@ router.get('/me',
   showMe)
 
 
-  /**
- * @api {get} /identities/me Retrieve current identity
- * @apiName RetrieveCurrentmember
- * @apiGroup Identity
- * @apiPermission identity
- * @apiParam {String} access_token Identity access_token.
- * @apiSuccess {Object} identity Identity's data.
- */
+/**
+* @api {get} /identities/exist Retrieve current identity
+* @apiName RetrieveCurrentmember
+* @apiGroup Identity
+* @apiPermission identity
+* @apiParam {String} access_token Identity access_token.
+* @apiSuccess {Object} identity Identity's data.
+*/
 router.get('/exist',
-/* master(), */
-query({ 
-      term :{
-              type: String,
-              paths: ['membername', 'email']
-            }
-        }),
-exist)
+  /* master(), */
+  query({
+    enabled: true,
+    term: {
+      type: String,
+      paths: ['membername', 'email']
+    }
+  }),
+  exist)
+
+
+/**
+* @api {get} /identities/preview Retrieve current identity
+* @apiName RetrieveCurrentmember
+* @apiGroup Identity
+* @apiPermission identity
+* @apiParam {String} access_token Identity access_token.
+* @apiSuccess {Object} identity Identity's data.
+*/
+router.get('/preview',
+  /* master(), */
+  query({
+    enabled: true,
+    term: {
+      type: String,
+      paths: ['membername', 'email']
+    }
+  }),
+  preview)
 
 /**
  * @api {get} /identities/:id Retrieve identity
@@ -91,7 +95,7 @@ router.get('/:id',
  */
 router.post('/',
   master(),
-  body({ email, password, membername, picture, dateOfBirth, role }),
+  body({ email, password, membername, thumbnail, key }),
   create)
 
 /**
@@ -109,7 +113,7 @@ router.post('/',
  */
 router.put('/:id',
   token({ required: true }),
-  body({ membername, picture }),
+  body({ membername, email, thumbnail, key }),
   update)
 
 /**
@@ -139,7 +143,7 @@ router.put('/:id/password',
  * @apiError 404 Identity not found.
  */
 router.delete('/:id',
-  token({ required: true, roles: ['admin'] }),
+  token({ required: true }),
   destroy)
 
 export default router

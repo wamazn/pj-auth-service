@@ -66,7 +66,7 @@ passport.use('password', new BasicStrategy((membername, password, done) => {
 
 passport.use('facebook', new BearerStrategy((token, done) => {
   facebookService.getUser(token).then((identity) => {
-    return Identity.createFromService(identity)
+    return Identity.createFromService(identity) // TODO create profile here too
   }).then((identity) => {
     done(null, identity)
     return null
@@ -75,7 +75,7 @@ passport.use('facebook', new BearerStrategy((token, done) => {
 
 passport.use('google', new BearerStrategy((token, done) => {
   googleService.getUser(token).then((identity) => {
-    return Identity.createFromService(identity)
+    return Identity.createFromService(identity) // TODO create profile here too
   }).then((identity) => {
     done(null, identity)
     return null

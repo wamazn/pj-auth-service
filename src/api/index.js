@@ -29,7 +29,7 @@ const router = new Router()
  * @apiParam {String[]} [sort=-createdAt] Order of returned items.
  * @apiParam {String[]} [fields] Fields to be returned.
  */
-router.use('/', session)
+//router.use('/', session)
 router.use('/identities', identity)
 router.use('/auth', auth)
 router.use('/password-resets', passwordReset)

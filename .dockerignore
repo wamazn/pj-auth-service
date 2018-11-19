@@ -1,4 +1,11 @@
 .git
+test
 node_modules
 npm-debug
 .gitignore
+note.md
+.yo-rc.jsn
+README.md
+.env
+.env.example
+.editorconfig

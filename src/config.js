@@ -19,10 +19,9 @@ if (process.env.NODE_ENV !== 'production') {
     sample: path.join(__dirname, '../.env.example')
   })
 }
-console.log("ENV", process.env)
 const config = {
   all: {
-    env: process.env.NODE_ENV || 'development',
+    env: process.env.NODE_ENV || 'production',
     root: path.join(__dirname, '..'),
     port: process.env.PORT || 9000,
     ip: process.env.IP || '0.0.0.0',
@@ -68,9 +67,14 @@ const config = {
     }
   },
   production: {
-    ip: process.env.IP || undefined,
-    port: process.env.PORT || 8080,
+    ip: process.env.IP || '0.0.0.0',
+    port: process.env.PORT || 9000,
     mongo: {
+      options: {
+        db: {
+          safe: true
+        }
+      },
       uri: process.env.MONGODB_URI || 'mongodb://oauthservice:OauthPass139@ds251210.mlab.com:51210/pajuani',
     }
   }

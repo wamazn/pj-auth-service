@@ -1,4 +1,4 @@
-# Pajuani Oauth
+# Pajuani Identity
 ## Commands
 
 ```bash

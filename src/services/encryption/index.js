@@ -1,10 +1,7 @@
 import crypto from 'crypto'
 import { default as NodeRSA} from 'node-rsa'
 import { secrets as configSecret } from '../../config'
-console.log(NodeRSA)
 export const RSAKey = NodeRSA(configSecret.rsaPvK)
-console.log(configSecret.rsaPvK)
-console.log('server RSA Pub', RSAKey.exportKey('public'))
 
 export const getRandomInRange = (max, min) => {
     min = min ? min : 0;

@@ -61,7 +61,8 @@ router.get('/preview',
     enabled: true,
     term: {
       type: String,
-      paths: ['membername', 'email']
+      paths: ['membername', 'email'],
+      bindTo: 'search'
     }
   }),
   preview)

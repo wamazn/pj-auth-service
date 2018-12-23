@@ -5,12 +5,15 @@ services:
     build: .
     ports:
      - "9000:9000"
+     - "5858:5858"
     env_file:
      - variables.env
     environment:
-     - NODE_ENV=production
+     - NODE_ENV=development
+    volumes:
+     - .:/usr/src/app
     depends_on: 
      - redis
-    entrypoint: ["node", "./src"]
+    entrypoint: ["npm", "start"]
   redis:
     image: "redis:alpine"

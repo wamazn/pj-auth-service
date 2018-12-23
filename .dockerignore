@@ -9,3 +9,6 @@ README.md
 .env
 .env.example
 .editorconfig
+docker-env
+env-config.sh
+note.md

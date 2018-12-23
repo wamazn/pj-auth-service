@@ -36,13 +36,14 @@ export const exist = ({ querymen: { query } }, res, next) => {
     })
 }
 
-export const preview = ({ querymen: { query } }, res, next) => {
-  if (query['$or'][0].email || query['$or'][0].membername)
+export const preview = ({ querymen: { query, search } }, res, next) => {
+  console.log("preview", query, search);
+  if (query.keywords)
     return Identity.find(query)
       .then(notFound(res))
-      .then(identity => identity.view())
+      .then(identity => identity.length > 0 ? identity.map( id => id.view()): identity)
       .then(success(res))
-      .catch(error(res))
+      .catch(/* error(res) */err => console.log(err))
   else
     return res.status(400).json({
       valid: false,

@@ -19,7 +19,11 @@ give executable permission on the bin
     sudo chmod +x /usr/local/bin/docker-compose
 test the installation
     docker-compose --version
-#for the app
+##for the app
+#prepare the environment
+    -first replace the env variable in the file env-config.sh
+    -run the script as: . env-config.sh
+#run everything
 running in dev
     docker-compose up
 see what it running 
@@ -30,3 +34,6 @@ stop
     docker-compose stop
 bring everything down
     docker-compose down --volumes
+#running only the image
+run: 
+    docker run --rm -it -p 9000:9000 --env-file ./docker-env imageName:tag

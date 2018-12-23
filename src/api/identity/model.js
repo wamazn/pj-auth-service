@@ -7,7 +7,7 @@ import { env } from '../../config'
 
 const roles = ['member', 'admin']
 
-const memberSchema = new Schema({
+const identitySchema = new Schema({
   email: {
     type: String,
     match: /^\S+@\S+\.\S+$/,
@@ -65,7 +65,7 @@ const memberSchema = new Schema({
   timestamps: true
 })
 
-memberSchema.pre('save', function (next) {
+identitySchema.pre('save', function (next) {
   if (!this.isModified('password')) return next()
 
   /* istanbul ignore next */
@@ -77,7 +77,7 @@ memberSchema.pre('save', function (next) {
   }).catch(next)
 })
 
-memberSchema.methods = {
+identitySchema.methods = {
   view (full) {
     let view = {}
     let fields = ['id', 'membername', 'thumbnail', 'email']
@@ -101,7 +101,7 @@ memberSchema.methods = {
   }
 }
 
-memberSchema.statics = {
+identitySchema.statics = {
   roles,
 
   createFromService ({ service, id, email, name, picture }) {
@@ -119,9 +119,9 @@ memberSchema.statics = {
   }
 }
 
-memberSchema.plugin(mongooseKeywords, { paths: ['email', 'membername'] })
+identitySchema.plugin(mongooseKeywords, { paths: ['email', 'membername'] })
 
-const model = mongoose.model('Identity', memberSchema)
+const model = mongoose.model('Identity', identitySchema)
 
 export const schema = model.schema
 export default model

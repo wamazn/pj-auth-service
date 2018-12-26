@@ -11,7 +11,7 @@ COPY package*.json ./
 RUN apk add --no-cache --virtual deps \
   python \
   build-base \
-  && npm install --only=production \
+  && npm install \
   && apk del deps 
 
 # Bundle app source

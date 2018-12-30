@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import randtoken from 'rand-token'
 import mongoose, { Schema } from 'mongoose'
 import mongooseKeywords from 'mongoose-keywords'
@@ -66,14 +66,16 @@ const identitySchema = new Schema({
 })
 
 identitySchema.pre('save', function (next) {
+
   if (!this.isModified('password')) return next()
 
   /* istanbul ignore next */
   const rounds = env === 'test' ? 1 : 9
+  console.log('prpresave', bcrypt)
 
-  bcrypt.hash(this.password, rounds).then((hash) => {
+  bcrypt.hash(this.password, rounds).then(hash => {
     this.password = hash
-    next()
+    return next()
   }).catch(next)
 })
 

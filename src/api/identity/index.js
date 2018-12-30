@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { middleware as query } from 'querymen'
+import { middleware as query, Schema as QuerymenShema} from 'querymen'
 import { middleware as body } from 'bodymen'
 import { password as passwordAuth, master, token } from '../../services/passport'
 import { index, 
@@ -14,6 +14,15 @@ export Identity, { schema } from './model'
 const router = new Router()
 const { email, password, key, membername, thumbnail} = schema.tree
 
+const findOneSchema = new QuerymenShema({
+  enabled: true,
+  key: {
+    type: String,
+    paths: ['membername', 'email']
+  },
+  limit: 1,
+  page: 1
+})
 /**
  * @api {get} /identities/me Retrieve current identity
  * @apiName RetrieveCurrentmember
@@ -29,6 +38,7 @@ router.get('/me',
 
 /**
 * @api {get} /identities/exist Retrieve current identity
+* /identities/exist?key=email|membername&access_token=qqwertqqqw
 * @apiName RetrieveCurrentmember
 * @apiGroup Identity
 * @apiPermission identity
@@ -36,19 +46,14 @@ router.get('/me',
 * @apiSuccess {Object} identity Identity's data.
 */
 router.get('/exist',
-  /* master(), */
-  query({
-    enabled: true,
-    term: {
-      type: String,
-      paths: ['membername', 'email']
-    }
-  }),
+  master(),
+  query(findOneSchema),
   exist)
 
 
 /**
 * @api {get} /identities/preview Retrieve current identity
+* /identities/preview?enabled=true|false&key=email|membername&access_token=qqwertqqqw
 * @apiName RetrieveCurrentmember
 * @apiGroup Identity
 * @apiPermission identity
@@ -56,15 +61,8 @@ router.get('/exist',
 * @apiSuccess {Object} identity Identity's data.
 */
 router.get('/preview',
-  /* master(), */
-  query({
-    enabled: true,
-    term: {
-      type: String,
-      paths: ['membername', 'email'],
-      bindTo: 'search'
-    }
-  }),
+  master(),
+  query(findOneSchema),
   preview)
 
 /**

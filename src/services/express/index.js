@@ -14,11 +14,11 @@ export default (apiRoot, routes) => {
 
   /* istanbul ignore next */
   if (env === 'production') {
-/*     app.set('forceSSLOptions', {
+    app.set('forceSSLOptions', {
       enable301Redirects: false,
       trustXFPHeader: true
     })
-    app.use(forceSSL) */
+    app.use(forceSSL)
   }
 
   /* istanbul ignore next */

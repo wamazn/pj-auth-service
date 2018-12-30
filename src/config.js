@@ -60,6 +60,7 @@ const config = {
   },
   development: {
     mongo: {
+      /* uri: 'mongodb://localhost:27017/pajuani-oauth', */
       uri: 'mongodb://oauthservice:OauthPass139@ds251210.mlab.com:51210/pajuani',
       options: {
         debug: true

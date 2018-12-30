@@ -23,8 +23,9 @@ export const show = ({ params }, res, next) =>
     .catch(next)
 
 export const exist = ({ querymen: { query } }, res, next) => {
-  if (query['$or'][0].email || query['$or'][0].membername)
-    return Identity.count(query)
+  delete query.enabled
+  if (query['$or'] && (query['$or'][0].email || query['$or'][0].membername))
+    return Identity.countDocuments(query)
       .then(count => ({ memberExist: count > 0 }))
       .then(success(res))
       .catch(error(res))
@@ -36,19 +37,26 @@ export const exist = ({ querymen: { query } }, res, next) => {
     })
 }
 
-export const preview = ({ querymen: { query, search } }, res, next) => {
-  console.log("preview", query, search);
-  if (query.keywords)
-    return Identity.find(query)
+export const preview = ({ querymen: { query } }, res, next) => {
+  const hasSerachTerm = query['$or'] && (query['$or'][0].email || query['$or'][0].membername) 
+  console.log(query)
+  if (query.enabled && hasSerachTerm)
+    return Identity.findOne(query)
       .then(notFound(res))
-      .then(identity => identity.length > 0 ? identity.map( id => id.view()): identity)
+      .then(identity => identity && identity.view())
       .then(success(res))
       .catch(/* error(res) */err => console.log(err))
-  else
+  else if(!query.enabled)
+    return res.status(401).json({
+      valid: false,
+      param: 'enabled',
+      message: 'Need special authorization'
+    })
+  else if(!hasSerachTerm)
     return res.status(400).json({
       valid: false,
-      param: 'email, membername',
-      message: 'email or membername is missing'
+      param: 'q',
+      message: 'query term is missing'
     })
 }
 
@@ -56,13 +64,17 @@ export const showMe = ({ identity }, res) =>
   res.json(identity.view(true))
 
 export const create = ({ bodymen: { body } }, res, next) => {
-  Identity.create(body)
+  console.log(body)
+  /* res.status(200).json(body) */
+  return Identity.create(body)
     .then(identity => {
+      console.log(identity)
       sign(identity.id)
         .then((token) => ({ token, identity: identity.view(true) }))
         .then(success(res, 201))
     })
     .catch((err) => {
+      console.log(err)
       /* istanbul ignore else */
       if (err.name === 'MongoError' && err.code === 11000) {
         res.status(409).json({

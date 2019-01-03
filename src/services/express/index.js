@@ -25,7 +25,7 @@ export default (apiRoot, routes) => {
   if (env === 'production' || env === 'development') {
     app.use(cors({
       exposedHeaders:[ 'x-pajuani-nx', 'x-pajuani-tk', 'x-pajuani-tg', 'x-pajuani-sd'],
-      allowedHeaders: ['content-type','x-pajuani-nx', 'x-pajuani-tk', 'x-pajuani-tg', 'x-pajuani-sd']
+      allowedHeaders: ['authorization', 'content-type','x-pajuani-nx', 'x-pajuani-tk', 'x-pajuani-tg', 'x-pajuani-sd']
     }))
     app.use(compression())
     app.use(morgan('dev'))

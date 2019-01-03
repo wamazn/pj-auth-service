@@ -53,11 +53,12 @@ passport.use('password', new BasicStrategy((membername, password, done) => {
   })
 
   Identity.findOne({ membername }).then((identity) => {
+    console.log('passp:', membername, identity)
     if (!identity) {
       done(true)
       return null
     }
-    return identity.authenticate(password, identity.password).then((identity) => {
+    return identity.authenticate(password).then((identity) => {
       done(null, identity)
       return null
     }).catch(done)

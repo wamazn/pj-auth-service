@@ -6,7 +6,8 @@ import { index,
   showMe, show, 
   exist, preview, 
   create, update, 
-  updatePassword, 
+  updatePassword,
+  updateAvatar, 
   destroy } from './controller'
 import { schema } from './model'
 export Identity, { schema } from './model'
@@ -114,6 +115,24 @@ router.put('/:id',
   token({ required: true }),
   body({ membername, email, thumbnail, key }),
   update)
+
+
+/**
+ * @api {put} /identities/:id Update identity
+ * @apiName Updatemember
+ * @apiGroup Identity
+ * @apiPermission identity
+ * @apiParam {String} access_token Identity access_token.
+ * @apiParam {String} [name] Identity's name.
+ * @apiParam {String} [picture] Identity's picture.
+ * @apiSuccess {Object} identity Identity's data.
+ * @apiError {Object} 400 Some parameters may contain invalid values.
+ * @apiError 401 Current identity or admin access only.
+ * @apiError 404 Identity not found.
+ */
+router.put('/:id/avatar',
+token({ required: true }),
+updateAvatar)
 
 /**
  * @api {put} /identities/:id/password Update password

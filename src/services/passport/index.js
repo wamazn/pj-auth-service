@@ -10,6 +10,7 @@ import Identity, { schema } from '../../api/identity/model'
 
 export const password = () => (req, res, next) =>
   passport.authenticate('password', { session: false }, (err, identity, info) => {
+    console.log('passp0:', err, identity)
     if (err && err.param) {
       return res.status(400).json(err)
     } else if (err || !identity) {
@@ -49,11 +50,12 @@ passport.use('password', new BasicStrategy((membername, password, done) => {
   const userSchema = new Schema({ membername: schema.tree.membername, password: schema.tree.password })
 
   userSchema.validate({ membername, password }, (err) => {
+    console.log('passp1:', membername, err)
     if (err) done(err)
   })
-
+  console.log('passp2:', membername)
   Identity.findOne({ membername }).then((identity) => {
-    console.log('passp:', membername, identity)
+    console.log('passp3:', membername, identity)
     if (!identity) {
       done(true)
       return null
@@ -84,6 +86,7 @@ passport.use('google', new BearerStrategy((token, done) => {
 }))
 
 passport.use('master', new BearerStrategy((token, done) => {
+  console.log('master key mdw', token)
   if (token === masterKey) {
     done(null, {})
   } else {
@@ -101,6 +104,7 @@ passport.use('token', new JwtStrategy({
     //ExtractJwt.fromHeader('customHeader')
   ])
 }, ({ id }, done) => {
+  console.log('token mdw', id)
   Identity.findById(id).then((identity) => {
     done(null, identity)
     return null

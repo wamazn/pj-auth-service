@@ -24,6 +24,7 @@ export const show = ({ params }, res, next) =>
 
 export const exist = ({ querymen: { query } }, res, next) => {
   delete query.enabled
+  console.log('exist???', query)
   if (query['$or'] && (query['$or'][0].email || query['$or'][0].membername))
     return Identity.countDocuments(query)
       .then(count => ({ memberExist: count > 0 }))
@@ -86,6 +87,19 @@ export const create = ({ bodymen: { body } }, res, next) => {
         error(res)(err)
       }
     })
+}
+
+export const updateAvatar = (req, res, next) => { 
+  let data = new Buffer('')
+  req.on('data', (chunk) => {
+    data = Buffer.concat([data, chunk])
+    console.log('request data', chunk)
+  })
+  req.on('end', () => {
+    console.log('ended')
+    req.identity.save()
+    return res.send({ good: true})
+  })
 }
 
 export const update = ({ bodymen: { body }, params, identity }, res, next) =>

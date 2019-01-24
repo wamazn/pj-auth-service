@@ -4,6 +4,10 @@
   "main": "src",
   "private": true,
   "scripts": {
+    "prerestart-service:dev":". ./env-config.sh",
+    "start-service:dev":". ./env-config.sh && docker-compose -f docker-compose.dev.yml up --build -d",
+    "restart-service:dev":"docker-compose restart",
+    "rm-service:dev":"docker-compose kill && docker-compose rm -f",
     "start": "nodemon .",
     "test": "jest",
     "coverage": "npm test -- --coverage",

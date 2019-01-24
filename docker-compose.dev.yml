@@ -1,5 +1,51 @@
+###########################################################################
+#######            Pajuani Oauth2, OpenId Connect Service           #######
+###########################################################################
+#                                                                         #
+#                                                                         #
+#                                                                         #
+#                                                                         #
+#                                                                         #
+#                                                                         #
+#                                                                         #
+###########################################################################
+
 version: '3'
 services:
+  hydra-migrate:
+    image: oryd/hydra:$HYDRA_VERSION
+    links:
+     - postgresd:postgresd
+    networks:
+     - intranet
+    env_file:
+     - variables.env
+    environment:
+     - LOG_LEVEL=debug
+    command:
+      migrate sql postgres://dbuser:secret@postgresd:5432/accesscontroldb?sslmode=disable
+    restart: on-failure
+  
+  hydra:
+    image: oryd/hydra:$HYDRA_VERSION
+    links:
+     - postgresd:postgresd
+    ports:
+     - "4444:4444"
+     - "4445:4445"
+    depends_on:
+     - hydra-migrate
+    command:
+      serve all --dangerous-force-http
+    networks:
+     - intranet
+    env_file:
+     - variables.env
+    environment:
+     - LOG_LEVEL=debug
+     - OAUTH2_SHARE_ERROR_DEBUG=1
+    restart: on-failure
+
   api:
     restart: always
     build: .
@@ -9,11 +55,73 @@ services:
     env_file:
      - variables.env
     environment:
+     - NODE_TLS_REJECT_UNAUTHORIZED=0
+     - PORT=4488
      - NODE_ENV=development
+    networks:
+     - intranet
     volumes:
      - .:/usr/src/app
     depends_on: 
      - redis
     entrypoint: ["npm", "start"]
+  
+  postgresd:
+    image: postgres:9.6
+    networks:
+     - intranet
+    env_file:
+     - variables.env
   redis:
     image: "redis:alpine"
+
+  minio1:
+    image: minio/minio
+    volumes:
+    - pajuani-auth-storage1:/export
+    ports:
+    - "9001:9000"
+    environment:
+    - MINIO_ACCESS_KEY=minioAccessKeyToChangeLater
+    - MINIO_SECRET_KEY=YouShouldReallyChangeThisSecret
+    command: server http://minio{1...4}/export
+  minio2:
+    image: minio/minio
+    volumes:
+    - pajuani-auth-storage2:/export
+    ports:
+    - "9002:9000"
+    environment:
+    - MINIO_ACCESS_KEY=minioAccessKeyToChangeLater
+    - MINIO_SECRET_KEY=YouShouldReallyChangeThisSecret
+    command: server http://minio{1...4}/export
+  minio3:
+    image: minio/minio
+    volumes:
+    - pajuani-auth-storage3:/export
+    ports:
+    - "9003:9000"
+    environment:
+    - MINIO_ACCESS_KEY=minioAccessKeyToChangeLater
+    - MINIO_SECRET_KEY=YouShouldReallyChangeThisSecret
+    command: server http://minio{1...4}/export
+  minio4:
+    image: minio/minio
+    volumes:
+    - pajuani-auth-storage4:/export
+    ports:
+    - "9004:9000"
+    environment:
+    - MINIO_ACCESS_KEY=minioAccessKeyToChangeLater
+    - MINIO_SECRET_KEY=YouShouldReallyChangeThisSecret
+    command: server http://minio{1...4}/export
+
+volumes:
+  pajuani-auth-storage1:
+  pajuani-auth-storage2:
+  pajuani-auth-storage3:
+  pajuani-auth-storage4:
+
+networks:
+  intranet:
+    driver: bridge

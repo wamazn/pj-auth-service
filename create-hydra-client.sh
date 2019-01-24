@@ -1,0 +1,1 @@
+docker run --link login-consent-hydra:hydra oryd/hydra:v1.0.0-beta.9 clients import pj-auth-api-hydra-client.json

@@ -5,7 +5,7 @@ start-dev-service:
 		./env-config.sh 
 		docker-compose -f docker-compose.dev.yml up --build -d
 
-restart-dev-service: start-environment
+restart-dev-service: start-dev-environment
 		docker-compose restart
 
 rm-dev-service:
